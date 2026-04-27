@@ -132,10 +132,10 @@ Baixe os parquets do bucket e coloque-os em `data/` (a pasta é ignorada pelo Gi
 ### 4. Executar os notebooks na ordem
 
 ```
-notebooks/01_preprocessing.ipynb     # gera outputs/processed/*.parquet
+notebooks/01_preprocessing.ipynb     
 notebooks/02_qualidade_fontes.ipynb
 notebooks/03_janela_atualidade.ipynb
-notebooks/04_ranking_sistemas.ipynb  # gera deliverables/*.csv
+notebooks/04_ranking_sistemas.ipynb 
 notebooks/05_analise_por_ddd.ipynb
 notebooks/06_teste_phone_scorer.ipynb
 notebooks/07_proporcao_cpfs_taxas.ipynb    
