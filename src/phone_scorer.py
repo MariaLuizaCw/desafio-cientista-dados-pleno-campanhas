@@ -8,9 +8,20 @@ os ``k`` melhores telefones de cada CPF:
    ``ranking_confiabilidade.csv`` (chave: ``id_sistema``).
 2. **Atualidade do telefone** — regras por sistema em
    ``df_regras_atualidade.csv`` (2 cortes por sistema, já associadas a uma
-   ``prob_alta_perf``).
+   ``prob_high_read``).
 3. **Taxa de leitura histórica** — opcional. Quando disponível, é
    consumida de ``taxa_read_telefone.csv`` (agregado por telefone).
+
+**Convenção de classificação** (usada nesta solução):
+
+- **HighDelivery**: telefone/CPF com taxa de entrega
+  (``status ∈ {delivered, read}``) ≥ 90%.
+- **HighRead**: telefone/CPF com taxa de leitura
+  (``status == read``) ≥ 75%.
+
+As regras de atualidade (``df_regras_atualidade.csv``) são treinadas
+com o alvo **Telefone HighRead**; daí a coluna ``prob_high_read``
+associada a cada corte de ``dias_desde_atualizacao``.
 
 **Entrada principal do algoritmo (não recebe mais o dataset bruto de
 aparições nem de disparos):** um DataFrame enxuto com, para cada CPF, os
@@ -86,7 +97,7 @@ class PhoneScorer:
 
     Fontes auxiliares (colunas exigidas):
       - ``ranking_confiabilidade``: ``id_sistema``, ``score`` (e opcionalmente ``sistema_nome``).
-      - ``regras_atualidade``: ``id_sistema``, ``regra`` (ex.: ``"dias <= 826"``), ``prob_alta_perf``.
+      - ``regras_atualidade``: ``id_sistema``, ``regra`` (ex.: ``"dias <= 826"``), ``prob_high_read``.
       - ``taxa_read`` (opcional): ``telefone``, ``taxa_read``.
 
     Entrada de ``score``/``top_k``: DataFrame com ``cpf``, ``telefone``,
@@ -118,7 +129,10 @@ class PhoneScorer:
         parsed = g["regra"].map(_parse_regra)
         g["operador"] = parsed.str[0]
         g["limite"] = parsed.str[1].astype(float)
-        self._regras = g[["id_sistema", "operador", "limite", "prob_alta_perf"]]
+        # Aceita o nome legado ``prob_alta_perf`` para retrocompatibilidade.
+        if "prob_high_read" not in g.columns and "prob_alta_perf" in g.columns:
+            g = g.rename(columns={"prob_alta_perf": "prob_high_read"})
+        self._regras = g[["id_sistema", "operador", "limite", "prob_high_read"]]
 
         if self.taxa_read is not None:
             t = self.taxa_read[["telefone", "taxa_read"]].copy()
@@ -170,7 +184,7 @@ class PhoneScorer:
             mask = m["operador"] == op
             if mask.any():
                 cond.loc[mask] = fn(m.loc[mask, "dias"], m.loc[mask, "limite"]).fillna(False)
-        hits = m[cond].drop_duplicates("_k").set_index("_k")["prob_alta_perf"]
+        hits = m[cond].drop_duplicates("_k").set_index("_k")["prob_high_read"]
         return hits.reindex(range(len(base))).to_numpy()
 
     @staticmethod

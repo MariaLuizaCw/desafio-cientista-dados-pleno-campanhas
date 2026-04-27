@@ -9,6 +9,18 @@ para alimentar o motor de disparos de WhatsApp.
 
 Implementação: `src/phone_scorer.py` (classe `PhoneScorer`).
 
+### Convenção de classificação
+
+Ao longo do projeto adotamos duas categorias binárias — aplicáveis
+tanto em nível de **telefone** quanto de **CPF**:
+
+- **HighDelivery**: taxa de entrega (`status ∈ {delivered, read}`) ≥ **90%**.
+- **HighRead**: taxa de leitura (`status == read`) ≥ **75%**.
+
+Daí os termos *Telefone HighDelivery* / *Telefone HighRead* e
+*CPF HighDelivery* / *CPF HighRead*. As regras de atualidade usadas
+pelo `PhoneScorer` têm como alvo **Telefone HighRead**.
+
 ---
 
 ## 2. Entrada principal
@@ -39,7 +51,7 @@ Carregadas uma única vez na construção (`PhoneScorer(...)` ou
 | Fonte                    | Obrigatória?  | Colunas exigidas                              |
 |--------------------------|---------------|-----------------------------------------------|
 | `ranking_confiabilidade` | sim           | `id_sistema`, `score`; `sistema_nome` opcional. |
-| `regras_atualidade`      | sim           | `id_sistema`, `regra`, `prob_alta_perf`.      |
+| `regras_atualidade`      | sim           | `id_sistema`, `regra`, `prob_high_read`.      |
 | `taxa_read`              | **opcional**  | `telefone`, `taxa_read`.                      |
 
 ### 3.1 `ranking_confiabilidade`
@@ -47,7 +59,8 @@ Carregadas uma única vez na construção (`PhoneScorer(...)` ou
 Resultado da análise de qualidade das fontes (notebook
 `02_qualidade_fontes.ipynb`). Cada sistema recebe um **score de
 confiabilidade ∈ [0, 1]** que reflete o quão confiável é aquela base
-como origem de telefones.
+como origem de telefones, calculado como `P(Telefone HighDelivery |
+sistema)`.
 
 - **`id_sistema`** — identificador único do sistema.
 - **`score`** — confiabilidade do sistema (quanto maior, melhor).
@@ -58,8 +71,8 @@ como origem de telefones.
 
 Gerada pelas árvores de decisão no notebook
 `03_janela_atualidade.ipynb`. Cada sistema possui **2 cortes** sobre
-`dias_desde_atualizacao`, e cada corte está associado a uma
-probabilidade de alta performance do telefone (taxa de read ≥ 90%).
+`dias_desde_atualizacao`, e cada corte está associado à
+probabilidade de **Telefone HighRead** (taxa de leitura ≥ 75%).
 Essas regras transformam a idade de um registro em um score de
 atualidade.
 
@@ -67,9 +80,9 @@ atualidade.
 - **`regra`** — expressão textual `"dias <op> <limite>"` (ex.:
   `"dias <= 826"`). Parseada via regex; operadores suportados: `<=`,
   `<`, `>=`, `>`, `==`.
-- **`prob_alta_perf`** — probabilidade associada ao corte. Quando a
-  regra é satisfeita, esse valor é usado diretamente como
-  `score_atualidade` bruto do telefone.
+- **`prob_high_read`** — probabilidade de Telefone HighRead
+  associada ao corte. Quando a regra é satisfeita, esse valor é
+  usado diretamente como `score_atualidade` bruto do telefone.
 
 ### 3.3 `taxa_read` *(opcional)*
 
@@ -122,7 +135,7 @@ Normalização: min-max dentro do CPF.
 Valor bruto: para cada linha, calcula-se
 `dias_desde_atualizacao = data_referencia - data_atualizacao` e
 confronta-se com as regras do `id_sistema` daquele telefone; a regra
-satisfeita fornece `prob_alta_perf`, que é o `score_atualidade` bruto.
+satisfeita fornece `prob_high_read`, que é o `score_atualidade` bruto.
 `data_referencia` é configurável (default = hoje, normalizada).
 Normalização: min-max dentro do CPF.
 

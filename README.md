@@ -4,6 +4,23 @@ Solução para o case da Prefeitura do Rio: medir o "calor" das fontes de telefo
 
 ---
 
+## Convenção de classificação
+
+Ao longo de todo o projeto adotamos duas categorias binárias de qualidade — aplicáveis tanto a um **telefone** quanto a um **CPF**:
+
+| Categoria         | Definição                                                                 | Limiar |
+|-------------------|---------------------------------------------------------------------------|--------|
+| **HighDelivery**  | Taxa de entrega = `(delivered + read) / total_disparos` ≥ limiar          | **90%** |
+| **HighRead**      | Taxa de leitura = `read / total_disparos` ≥ limiar                        | **75%** |
+
+Combinações usadas nos notebooks e nos entregáveis:
+
+- **Telefone HighDelivery** / **Telefone HighRead** — quando o objeto é um telefone.
+- **CPF HighDelivery** / **CPF HighRead** — quando o objeto é um CPF.
+
+
+---
+
 ## Onde encontrar cada entregável
 
 ### Parte 1 — Análise Exploratória e Qualidade de Fontes
@@ -39,7 +56,7 @@ Solução para o case da Prefeitura do Rio: medir o "calor" das fontes de telefo
 - **Entregável:** desenho do experimento com hipótese nula, métricas primárias/secundárias, tamanho de amostra e duração estimada.
 - **Onde:**
   - `deliverables/proposta_teste_ab/proposta_teste_ab.pdf` — documento final da proposta.
-  - `deliverables/proposta_teste_ab/latex/` — arquivos .tex usados no desenvolvimento do documento .
+  - `deliverables/proposta_teste_ab/latex/` — arquivos .tex usados no desenvolvimento do documento.
   - `notebooks/07_proporcao_cpfs_taxas.ipynb` — estatísticas auxiliares para o cálculo de tamanho de amostra (insumo da proposta).
 
 
