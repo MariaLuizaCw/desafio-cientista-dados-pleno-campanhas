@@ -40,7 +40,7 @@ Solução para o case da Prefeitura do Rio: medir o "calor" das fontes de telefo
 - **Onde:**
   - `deliverables/proposta_teste_ab/proposta_teste_ab.pdf` — documento final da proposta.
   - `deliverables/proposta_teste_ab/latex/` — arquivos .tex usados no desenvolvimento do documento .
-  - `notebooks/07_taxa_read_cpf.ipynb` — estatísticas auxiliares para o cálculo de tamanho de amostra (insumo da proposta).
+  - `notebooks/07_proporcao_cpfs_taxas.ipynb` — estatísticas auxiliares para o cálculo de tamanho de amostra (insumo da proposta).
 
 
 ---
@@ -57,7 +57,7 @@ desafio-cientista-dados-pleno-campanhas/
 │   ├── 04_ranking_sistemas.ipynb
 │   ├── 05_analise_por_ddd.ipynb
 │   ├── 06_teste_phone_scorer.ipynb
-│   └── 07_taxa_read_cpf.ipynb
+│   └── 07_proporcao_cpfs_taxas.ipynb
 ├── src/
 │   ├── phone_scorer.py        # classe PhoneScorer (algoritmo de escolha)
 │   └── phone_scorer.md        # especificação detalhada do algoritmo
@@ -88,7 +88,7 @@ desafio-cientista-dados-pleno-campanhas/
 | 04_ranking_sistemas.ipynb        | Parte 2: Inteligência de Priorização          | 3. Ranking de Sistemas |
 | 05_analise_por_ddd.ipynb         | Parte 2: Inteligência de Priorização          | 4. Algoritmo de Escolha (DDD) |
 | 06_teste_phone_scorer.ipynb      | Parte 2: Inteligência de Priorização          | 4. Algoritmo de Escolha (Scorer) |
-| 07_taxa_read_cpf.ipynb           | Parte 3: Desenho de Experimento               | 5. Baseline para Teste A/B |
+| 07_proporcao_cpfs_taxas.ipynb           | Parte 3: Desenho de Experimento               | 5. Baseline para Teste A/B |
 
 
 ---
@@ -138,7 +138,7 @@ notebooks/03_janela_atualidade.ipynb
 notebooks/04_ranking_sistemas.ipynb  # gera deliverables/*.csv
 notebooks/05_analise_por_ddd.ipynb
 notebooks/06_teste_phone_scorer.ipynb
-notebooks/07_taxa_read_cpf.ipynb      
+notebooks/07_proporcao_cpfs_taxas.ipynb    
 ```
 
 O notebook **01 é obrigatório** antes de qualquer outro: ele materializa os parquets intermediários consumidos pelos demais.
