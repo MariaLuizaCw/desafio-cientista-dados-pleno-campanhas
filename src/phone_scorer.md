@@ -147,7 +147,6 @@ Componentes sem valor após a normalização recebem o valor **neutro
 0.5**. Casos típicos:
 
 - sistema sem regra de atualidade aplicável;
-- telefone sem histórico de `taxa_read`;
 - CPF com um único telefone (min-max degenera).
 
 O 0.5 evita penalizar ou premiar artificialmente o telefone por falta
