@@ -1,89 +1,96 @@
-
 # Algoritmo de Scoring de Telefones (`PhoneScorer`)
 
 ## 1. Objetivo
 
-Dado um CPF que possui múltiplos telefones associados, atribuir um **score
-interpretável ∈ [0, 1]** a cada telefone e devolver um **ranking** — em
-particular, os **k melhores telefones por CPF** (default `k=2`) para
-alimentar o motor de disparos de WhatsApp.
+Dado um CPF com múltiplos telefones associados, atribuir um **score
+interpretável ∈ [0, 1]** a cada telefone e devolver um **ranking** —
+em particular, os **k melhores telefones por CPF** (default `k=2`)
+para alimentar o motor de disparos de WhatsApp.
 
 Implementação: `src/phone_scorer.py` (classe `PhoneScorer`).
 
+---
+
 ## 2. Entrada principal
 
+`score(df)` e `top_k(df, k)` recebem um DataFrame enxuto com, para cada
+CPF, os telefones candidatos:
 
-O método `score(df)` / `top_k(df, k)` recebe um DataFrame enxuto com, para
-cada CPF, os telefones associados:
-
-| Coluna | Tipo | Descrição |
-|---|---|---|
-| `cpf` | str | Identificador do CPF. |
-| `telefone` | str | Telefone candidato. |
-| `id_sistema` | str | Sistema de origem do registro. |
-| `data_atualizacao` | datetime | Data em que o registro foi atualizado naquele sistema. |
+| Coluna             | Tipo       | Descrição                                              |
+|--------------------|------------|--------------------------------------------------------|
+| `cpf`              | str        | Identificador do CPF.                                  |
+| `telefone`         | str        | Telefone candidato.                                    |
+| `id_sistema`       | str        | Sistema de origem do registro.                         |
+| `data_atualizacao` | datetime   | Data em que o registro foi atualizado naquele sistema. |
 
 Repetições são **esperadas e consolidadas internamente**:
 
 - `(cpf, telefone, id_sistema)` com várias datas → mantém a **mais recente**.
-- `(cpf, telefone)` em vários sistemas → escolhe o **sistema mais confiável**
-  segundo o ranking.
+- `(cpf, telefone)` em vários sistemas → escolhe o **sistema mais
+  confiável** segundo o ranking de confiabilidade.
+
+---
 
 ## 3. Fontes auxiliares
 
 Carregadas uma única vez na construção (`PhoneScorer(...)` ou
 `PhoneScorer.from_paths(...)`):
 
-| Fonte | Obrigatória? | Colunas exigidas |
-|---|---|---|
-| `ranking_confiabilidade` | sim | `id_sistema`, `score`; `sistema_nome` opcional. |
-| `regras_atualidade` | sim | `id_sistema`, `regra`, `prob_alta_perf`. |
-| `taxa_read` | **opcional** | `telefone`, `taxa_read`. |
+| Fonte                    | Obrigatória?  | Colunas exigidas                              |
+|--------------------------|---------------|-----------------------------------------------|
+| `ranking_confiabilidade` | sim           | `id_sistema`, `score`; `sistema_nome` opcional. |
+| `regras_atualidade`      | sim           | `id_sistema`, `regra`, `prob_alta_perf`.      |
+| `taxa_read`              | **opcional**  | `telefone`, `taxa_read`.                      |
 
 ### 3.1 `ranking_confiabilidade`
 
-Resultado da análise de qualidade das fontes de dados (notebook
+Resultado da análise de qualidade das fontes (notebook
 `02_qualidade_fontes.ipynb`). Cada sistema recebe um **score de
-confiabilidade ∈ [0, 1]** que reflete o quão confiável é aquela base como
-origem de telefones. 
+confiabilidade ∈ [0, 1]** que reflete o quão confiável é aquela base
+como origem de telefones.
 
-- **`id_sistema`** — identificador único do sistema de origem.
+- **`id_sistema`** — identificador único do sistema.
 - **`score`** — confiabilidade do sistema (quanto maior, melhor).
-- **`sistema_nome`** *(opcional)* — nome legível do sistema; se presente,
-  é propagado para a saída para facilitar a auditoria.
+- **`sistema_nome`** *(opcional)* — nome legível; se presente, é
+  propagado para a saída para facilitar a auditoria.
 
 ### 3.2 `regras_atualidade`
 
-Gerada pelas árvores de decisão no notebook `03_janela_atualidade.ipynb`.
-Cada sistema possui **2 cortes** sobre `dias_desde_atualizacao`, e cada
-corte está associado a uma probabilidade de alta performance do telefone (taxa de read > 90%). A classe usa
-essas regras para transformar a idade de um registro em um score de
+Gerada pelas árvores de decisão no notebook
+`03_janela_atualidade.ipynb`. Cada sistema possui **2 cortes** sobre
+`dias_desde_atualizacao`, e cada corte está associado a uma
+probabilidade de alta performance do telefone (taxa de read ≥ 90%).
+Essas regras transformam a idade de um registro em um score de
 atualidade.
 
-- **`id_sistema`** — identificador do sistema (mesmo domínio do ranking).
-- **`regra`** — expressão textual no formato `"dias <op> <limite>"` (ex.:
-  `"dias <= 826"`). Parseada via regex; operadores suportados: `<=`, `<`,
-  `>=`, `>`, `==`.
-- **`prob_alta_perf`** — probabilidade de alta performance associada
-  àquele corte. Serve diretamente como o `score_atualidade` do telefone
-  quando a regra é satisfeita.
+- **`id_sistema`** — mesmo domínio do ranking.
+- **`regra`** — expressão textual `"dias <op> <limite>"` (ex.:
+  `"dias <= 826"`). Parseada via regex; operadores suportados: `<=`,
+  `<`, `>=`, `>`, `==`.
+- **`prob_alta_perf`** — probabilidade associada ao corte. Quando a
+  regra é satisfeita, esse valor é usado diretamente como
+  `score_atualidade` bruto do telefone.
 
 ### 3.3 `taxa_read` *(opcional)*
 
-Agregado histórico de disparos de WhatsApp por telefone. Quando fornecido,
-adiciona um sinal de desempenho real (o telefone já respondeu no passado?).
-Se **não fornecido**, o peso `w_read` é zerado e os demais pesos são
-renormalizados — o algoritmo continua funcional sem esse sinal.
+Agregado histórico de disparos de WhatsApp por telefone. Quando
+fornecido, adiciona um sinal de desempenho real (o telefone já
+respondeu no passado?). Se **não fornecido**, `w_read` é zerado e os
+demais pesos são renormalizados — o algoritmo continua funcional.
 
 - **`telefone`** — número do telefone (chave de junção).
-- **`taxa_read`** — proporção de mensagens lidas (`total_reads /
-  total_envios`). Quanto maior, melhor o histórico de engajamento
-  daquele número.
+- **`taxa_read`** — `total_reads / total_envios`. Quanto maior, melhor
+  o histórico de engajamento.
+
+---
 
 ## 4. Metodologia do score
 
-O score final é uma **combinação linear ponderada** de três componentes
-— escolha proposital pela total interpretabilidade (não é caixa-preta):
+### 4.1 Visão geral
+
+O score final é uma **combinação linear ponderada** de três
+componentes — escolha proposital pela total interpretabilidade (não é
+caixa-preta):
 
 ```
 score_final = w_sistema    * n_score_sistema
@@ -91,33 +98,62 @@ score_final = w_sistema    * n_score_sistema
             + w_read       * n_score_read
 ```
 
-Cada componente é normalizado via **min-max dentro do mesmo CPF** (a
-comparação relevante é sempre entre os telefones de um mesmo CPF):
+> **Convenção de nomes:** `score_*` são os valores **brutos** (saída
+> direta das fontes auxiliares). `n_score_*` são esses mesmos valores
+> **após normalização min-max dentro do mesmo CPF** — ou seja, o
+> prefixo `n_` indica "normalizado". A combinação linear sempre opera
+> sobre os `n_score_*`, nunca sobre os brutos.
 
-1. **`n_score_sistema`** — `score_sistema` vindo do ranking de
-   confiabilidade do **sistema escolhido** (o mais confiável dentre os que
-   reportaram aquele `(cpf, telefone)`).
-2. **`n_score_atualidade`** — calculado vetorialmente: para cada linha,
-   `dias_desde_atualizacao = data_referencia - data_atualizacao` é
-   confrontado com as regras do `id_sistema` daquele telefone; a regra
-   cujo `operador/limite` é satisfeito fornece a `prob_alta_perf`.
-   `data_referencia` é configurável (default = hoje, normalizada).
-3. **`n_score_read`** — vem da `taxa_read` por telefone. **Se a fonte não
-   é fornecida**, `w_read` é zerado e `w_sistema`/`w_atualidade` são
-   **renormalizados** para somar 1 — o algoritmo continua funcionando
-   sem regressão.
+A normalização min-max por CPF é feita porque a comparação relevante é
+sempre **entre os telefones de um mesmo CPF** (qual deles é o melhor
+candidato), não entre CPFs distintos.
 
-### Pesos
+### 4.2 Componentes
 
-Default em `ScoreWeights`: `w_sistema=0.3`, `w_atualidade=0.2`,
-`w_read=0.5`. 
+**1. `score_sistema` → `n_score_sistema`**
 
-### Imputação de valores faltantes
+Valor bruto: `score` do sistema escolhido (o mais confiável dentre os
+que reportaram aquele `(cpf, telefone)`), vindo do
+`ranking_confiabilidade`.
+Normalização: min-max dentro do CPF.
 
-Componentes sem valor (ex.: sistema sem regra aplicável, telefone sem
-histórico, ou CPF com um único telefone)
-recebem valor **neutro 0.5** após a normalização — evita penalizar ou
-premiar artificialmente o telefone por falta de sinal.
+**2. `score_atualidade` → `n_score_atualidade`**
+
+Valor bruto: para cada linha, calcula-se
+`dias_desde_atualizacao = data_referencia - data_atualizacao` e
+confronta-se com as regras do `id_sistema` daquele telefone; a regra
+satisfeita fornece `prob_alta_perf`, que é o `score_atualidade` bruto.
+`data_referencia` é configurável (default = hoje, normalizada).
+Normalização: min-max dentro do CPF.
+
+**3. `taxa_read` → `n_score_read`**
+
+Valor bruto: `taxa_read` por telefone (vindo da fonte opcional).
+Normalização: min-max dentro do CPF.
+Se a fonte **não é fornecida**, `w_read = 0` e `w_sistema` /
+`w_atualidade` são **renormalizados** para somar 1.
+
+### 4.3 Pesos
+
+Default em `ScoreWeights`:
+
+- `w_sistema = 0.3`
+- `w_atualidade = 0.2`
+- `w_read = 0.5`
+
+### 4.4 Imputação de valores faltantes
+
+Componentes sem valor após a normalização recebem o valor **neutro
+0.5**. Casos típicos:
+
+- sistema sem regra de atualidade aplicável;
+- telefone sem histórico de `taxa_read`;
+- CPF com um único telefone (min-max degenera).
+
+O 0.5 evita penalizar ou premiar artificialmente o telefone por falta
+de sinal.
+
+---
 
 ## 5. Uso
 
@@ -136,22 +172,32 @@ ranking = scorer.score(df_telefones)
 top2    = scorer.top_k(df_telefones, k=2)
 ```
 
-- **Com histórico**: os 3 sinais entram na combinação linear com os pesos
-  originais.
-- **Sem histórico**: omita `taxa_read_path` (ou `taxa_read=None`). A
-  classe detecta a ausência e renormaliza os pesos restantes.
+- **Com histórico de `taxa_read`:** os 3 sinais entram na combinação
+  linear com os pesos originais.
+- **Sem histórico:** omita `taxa_read_path` (ou passe `taxa_read=None`).
+  A classe detecta a ausência e renormaliza os pesos restantes.
+
+---
 
 ## 6. Saída
 
-`score(...)` retorna um DataFrame ordenado por `(cpf, score_final desc)`,
-com `rank` por CPF e os componentes decompostos para auditoria:
+`score(...)` retorna um DataFrame ordenado por
+`(cpf, score_final desc)`, com `rank` por CPF e os componentes
+decompostos para auditoria.
 
-`cpf`, `telefone`, `rank`, `score_final`, `id_sistema`,
-`sistema_nome` (se disponível), `score_sistema`, `score_atualidade`,
-`taxa_read`, `n_score_sistema`, `n_score_atualidade`, `n_score_read`,
-`data_atualizacao`, `dias_desde_atualizacao`, `n_sistemas`,
-`peso_sistema`, `peso_atualidade`, `peso_read`.
+**Identificação:** `cpf`, `telefone`, `rank`, `id_sistema`,
+`sistema_nome` (se disponível), `data_atualizacao`,
+`dias_desde_atualizacao`, `n_sistemas`.
 
-Os pesos efetivamente aplicados (já renormalizados conforme `use_read`)
-são incluídos em cada linha — facilita reproduzir o cálculo
-manualmente e auditar decisões.
+**Score final:** `score_final`.
+
+**Componentes brutos:** `score_sistema`, `score_atualidade`,
+`taxa_read`.
+
+**Componentes normalizados (min-max por CPF):** `n_score_sistema`,
+`n_score_atualidade`, `n_score_read`.
+
+**Pesos efetivamente aplicados** (já renormalizados conforme
+`use_read`): `peso_sistema`, `peso_atualidade`, `peso_read`. Incluídos
+em cada linha para facilitar reproduzir o cálculo manualmente e
+auditar decisões.
