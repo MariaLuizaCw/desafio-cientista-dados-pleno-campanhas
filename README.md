@@ -1,113 +1,145 @@
-# Desafio Técnico - Cientista de Dados Pleno - Squad WhatsApp
+# Desafio Técnico — Cientista de Dados Pleno · Squad WhatsApp
+
+Solução para o case da Prefeitura do Rio: medir o "calor" das fontes de telefones do RMI e construir uma **inteligência de escolha** capaz de selecionar, dentre os telefones associados a um CPF, os mais propensos a entregar e ser lidos no WhatsApp.
 
 ---
 
-## Contexto
+## Onde encontrar cada entregável
 
-Na Prefeitura do Rio, enviamos milhares de mensagens por mês via WhatsApp. Cada disparo tem um custo e as janelas de comunicação com o cidadão são preciosas. 
+### Parte 1 — Análise Exploratória e Qualidade de Fontes
 
-O **Registro Municipal Integrado (RMI)** consolida dados de múltiplos sistemas (Saúde, Educação, Assistência Social, IPTU, etc.). Um desafio crítico é a **Multiplicidade**: um mesmo cidadão pode ter vários telefones vinculados a ele, muitas vezes antigos ou desatualizados. 
+**1. Desestruturação e Correlação**
+- **Entregável:** análise comparativa de taxas de entrega (`DELIVERED`) agregadas por sistema de origem.
+- **Onde:** `notebooks/02_qualidade_fontes.ipynb` 
 
-Como Cientista de Dados no Squad WhatsApp, seu objetivo é criar a **Inteligência de Escolha**: identificar quais fontes de dados são mais confiáveis ("quentes") para garantir que mensagens críticas cheguem ao cidadão de forma eficiente e com menor custo.
+**2. Janela de Atualidade**
+- **Entregável:** análise de decaimento da qualidade ao longo do tempo; identificação de "prazo de validade" por sistema.
+- **Onde:** `notebooks/03_janela_atualidade.ipynb`
+- **Artefato gerado:** `outputs/decision_trees/df_regras_atualidade.csv` (regras extraídas das árvores).
+
+### Parte 2 — Inteligência de Priorização
+
+**3. Ranking de Sistemas**
+- **Entregável:** tabela/score de ranking das fontes com justificativa matemática.
+- **Onde:** `notebooks/04_ranking_sistemas.ipynb` 
+- **Artefatos gerados:**
+  - `deliverables/ranking_confiabilidade.csv` 
+  - `deliverables/ranking_operacional.csv`
+
+**4. Algoritmo de Escolha**
+- **Entregável:** algoritmo que, dado um CPF com N telefones, seleciona automaticamente os 2 melhores combinando origem, atualidade e DDD.
+- **Onde:**
+  - `src/phone_scorer.py` - implementação do algoritmo.
+  - `src/phone_scorer.md` - especificação completa: entradas, fórmula, pesos e auditabilidade.
+  - `notebooks/06_teste_phone_scorer.ipynb` - demonstração de uso e validação do algoritmo.
+
+### Parte 3 — Desenho de Experimento
+
+**5. Proposta de Teste A/B**
+- **Entregável:** desenho do experimento com hipótese nula, métricas primárias/secundárias, tamanho de amostra e duração estimada.
+- **Onde:**
+  - `deliverables/proposta_teste_ab/proposta_teste_ab.pdf` — documento final da proposta.
+  - `deliverables/proposta_teste_ab/latex/` — arquivos .tex usados no desenvolvimento do documento .
+  - `notebooks/07_taxa_read_cpf.ipynb` — estatísticas auxiliares para o cálculo de tamanho de amostra (insumo da proposta).
+
 
 ---
 
-## Instruções
-
-1. Faça um fork do repositório do desafio para colocar a sua solução
-2. Use **Jupyter Notebooks** (.ipynb) bem documentados ou scripts Python/SQL
-3. Inclua **README.md** explicando sua abordagem, premissas e como reproduzir
-4. **Entrega**: Envie o link do repositório para `selecao.pcrj@gmail.com`
-
----
-
-## Dados
-
-Você terá acesso a duas tabelas principais mascaradas para garantir anonimato e consistência:
-
-### 1. Tabela de Performance: `base_disparo_mascarado`
-Histórico real de disparos efetuados pelo motor de mensagens.
-
-### 2. Tabela de Dimensão: `dim_telefone_mascarado`
-Conhecimento consolidado sobre os telefones e suas origens.
-
-
-**⚠️ DISCLAIMER SOBRE VIESES**: Algumas bases de dados já são consideradas "mais quentes" pela Prefeitura e aparecem com maior frequência nos logs. Identifique se uma base performa melhor porque é realmente superior ou se os números estão inflados pelo volume de tentativas (viés de seleção).
-
-### Acesso aos dados
-
-Os arquivos Parquet estão disponíveis no bucket GCS:
+## Estrutura do repositório
 
 ```
-https://console.cloud.google.com/storage/browser/case_vagas/whatsapp
+desafio-cientista-dados-pleno-campanhas/
+├── data/                      # dados brutos (NÃO versionado — ver "Dados")
+├── notebooks/                 # análises numeradas em ordem de execução
+│   ├── 01_preprocessing.ipynb
+│   ├── 02_qualidade_fontes.ipynb
+│   ├── 03_janela_atualidade.ipynb
+│   ├── 04_ranking_sistemas.ipynb
+│   ├── 05_analise_por_ddd.ipynb
+│   ├── 06_teste_phone_scorer.ipynb
+│   └── 07_taxa_read_cpf.ipynb
+├── src/
+│   ├── phone_scorer.py        # classe PhoneScorer (algoritmo de escolha)
+│   └── phone_scorer.md        # especificação detalhada do algoritmo
+├── outputs/
+│   ├── processed/             # parquets intermediários gerados pelo 01
+│   └── decision_trees/        # árvores e regras geradas pelo 03
+├── mapping/
+│   └── mapping_sistemas.csv   # de-para id_sistema → sistema_nome
+├── deliverables/
+│   ├── ranking_confiabilidade.csv
+│   ├── ranking_operacional.csv
+│   └── proposta_teste_ab/
+│       ├── proposta_teste_ab.pdf
+│       └── latex/             # fontes LaTeX da proposta (main.tex + seções)
+├── requirements.txt
+└── README.md
 ```
----
-
-## Parte 1: Análise Exploratória e Qualidade de Fontes
-
-**O objetivo aqui é medir o "calor" de cada sistema de origem.**
-
-### 1. Desestruturação e Correlação
-Um telefone pode ter vindo de vários sistemas. Use seus conhecimentos para correlacionar cada sistema de origem (`id_sistema_mask`) com a performance real nos disparos (`status_disparo`).
-
-**Entregue**: Análise comparativa de taxas de entrega (`DELIVERED`) agregadas por sistema de origem.
-
-### 2. Janela de Atualidade
-Investigue se o tempo decorrido desde a última atualização do telefone no sistema de origem (`registro_data_atualizacao`) impacta na chance de sucesso do disparo.
-
-**Entregue**: Análise de "decaimento" da qualidade do dado ao longo do tempo. Existe um "prazo de validade" para um telefone ser considerado quente?
 
 ---
 
-## Parte 2: Inteligência de Priorização
+## 📂 Mapeamento dos Notebooks
 
-**O objetivo aqui é criar a regra de negócio que o motor de disparos seguirá.**
+| Notebook                         | Parte do Projeto                              | Item |
+|----------------------------------|-----------------------------------------------|------|
+| 01_preprocessing.ipynb           | Base (pré-processamento para todas as partes + análise exploratória e entendimento dos dados) | —    |
+| 02_qualidade_fontes.ipynb        | Parte 1: Análise Exploratória                 | 1. Desestruturação e Correlação |
+| 03_janela_atualidade.ipynb       | Parte 1: Análise Exploratória                 | 2. Janela de Atualidade |
+| 04_ranking_sistemas.ipynb        | Parte 2: Inteligência de Priorização          | 3. Ranking de Sistemas |
+| 05_analise_por_ddd.ipynb         | Parte 2: Inteligência de Priorização          | 4. Algoritmo de Escolha (DDD) |
+| 06_teste_phone_scorer.ipynb      | Parte 2: Inteligência de Priorização          | 4. Algoritmo de Escolha (Scorer) |
+| 07_taxa_read_cpf.ipynb           | Parte 3: Desenho de Experimento               | 5. Baseline para Teste A/B |
 
-### 3. Ranking de Sistemas
-Com base nas análises anteriores, crie um ranking de confiabilidade para os sistemas da Prefeitura. 
-
-**Entregue**: Tabela ou Score de ranking das fontes. Explique matematicamente por que o sistema X é melhor que o sistema Y.
-
-### 4. Algoritmo de Escolha
-
-Imagine que você tem 3 telefones diferentes para o mesmo CPF. Proponha um algoritmo (score ou ranking) que escolha automaticamente os **dois melhores** para receberem a mensagem.
-
-**Entregue**: Explicação da lógica do algoritmo. Como você combina a "origem do dado" com a "data de atualização" e o "DDD" para tomar essa decisão?
 
 ---
 
-## Parte 3: Desenho de Experimento
+## Reprodutibilidade
 
-### 5. Proposta de Teste A/B
-Como você validaria que seu novo ranking é realmente melhor do que a estratégia de envio aleatório (ou baseada em ordem alfabética) que usamos hoje?
+### Pré-requisitos
 
-**Entregue**: Desenho do experimento. Defina hipótese nula, métricas primárias e secundárias, tamanho de amostra e tempo de duração estimado para o teste.
+- **Python 3.14** (versão usada no desenvolvimento)
+- Acesso aos parquets brutos do bucket GCS:
+  `https://console.cloud.google.com/storage/browser/case_vagas/whatsapp`
 
----
+### 1. Criar e ativar ambiente virtual
 
-## Avaliação
+**Windows (PowerShell):**
 
-Você será avaliado nos seguintes critérios:
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
 
-- **Manipulação de Dados (SQL/Python)**: Capacidade de lidar com arrays e joins complexos.
-- **Raciocínio Analítico e Estatístico**: Tratamento de vieses e solidez na definição de métricas.
-- **Visão de Negócio e Impacto**: Tradução da análise em uma regra de negócio acionável.
-- **Comunicação e Visualização**: Clareza na apresentação dos resultados.
+**Linux / macOS:**
 
----
+```bash
+python3.14 -m venv venv
+source venv/bin/activate
+```
 
-## FAQ
+### 2. Instalar dependências
 
-**1. O que define um telefone "quente"?**
-Aquele que tem maior probabilidade de estar ativo, ser entregue e lido pelo cidadão correto.
+```bash
+pip install -r requirements.txt
+```
 
-**2. Posso usar ferramentas de BI?**
-Sim, mas o core da análise e a lógica do algoritmo devem estar documentados no repositório.
+O `requirements.txt` lista as versões exatas usada.
 
----
+### 3. Posicionar os dados brutos
 
-## Contato
+Baixe os parquets do bucket e coloque-os em `data/` (a pasta é ignorada pelo Git via `.gitignore`).
 
-Dúvidas? Mande um e-mail para `patricia.catandi@prefeitura.rio` com o título começando com `[CASE DS]` 
+### 4. Executar os notebooks na ordem
 
-Boa sorte! 🚀
+```
+notebooks/01_preprocessing.ipynb     # gera outputs/processed/*.parquet
+notebooks/02_qualidade_fontes.ipynb
+notebooks/03_janela_atualidade.ipynb
+notebooks/04_ranking_sistemas.ipynb  # gera deliverables/*.csv
+notebooks/05_analise_por_ddd.ipynb
+notebooks/06_teste_phone_scorer.ipynb
+notebooks/07_taxa_read_cpf.ipynb      
+```
+
+O notebook **01 é obrigatório** antes de qualquer outro: ele materializa os parquets intermediários consumidos pelos demais.
+

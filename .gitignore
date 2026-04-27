@@ -1,0 +1,80 @@
+# Byte-compiled / optimized / DLL files
+
+**pycache**/
+*.py[cod]
+*$py.class
+
+# C extensions
+
+*.so
+
+# Distribuição / packaging
+
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Ambientes virtuais
+
+venv/
+env/
+ENV/
+.venv/
+
+# Configurações de IDE
+
+.vscode/
+.idea/
+
+# Logs e arquivos temporários
+
+*.log
+*.tmp
+*.swp
+.DS_Store
+
+# Testes / coverage
+
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+pytest_cache/
+
+# Jupyter Notebook
+
+.ipynb_checkpoints/
+
+# Variáveis de ambiente
+
+.env
+.env.*
+
+# Arquivos de banco de dados
+
+*.sqlite3
+
+# Pasta de dados (IGNORAR TUDO)
+
+data/
+
+# (opcional) manter a pasta data no repositório com um placeholder
+
+# !data/
+
+# !data/.gitkeep
