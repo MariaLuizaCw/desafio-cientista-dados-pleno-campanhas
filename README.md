@@ -21,6 +21,16 @@ Combinações usadas nos notebooks e nos entregáveis:
 
 ---
 
+## Relatório Consolidado
+
+> **`deliverables/Relatorio_Completo_Desafio_Ciencia_de_Dados.pdf`**
+
+Relatório em linguagem acessível que consolida **todas as análises e entregáveis** do projeto em um único documento: qualidade das fontes, janela de atualidade, ranking de sistemas, análise por DDD, especificação do algoritmo `PhoneScorer` e proposta de Teste A/B. Inclui as principais tabelas, gráficos e conclusões de cada etapa.
+
+Para o aprofundamento técnico completo (código, outputs intermediários, análises auxiliares), recomenda-se a leitura dos notebooks listados abaixo.
+
+---
+
 ## Onde encontrar cada entregável
 
 ### Parte 1 — Análise Exploratória e Qualidade de Fontes
@@ -55,8 +65,7 @@ Combinações usadas nos notebooks e nos entregáveis:
 **5. Proposta de Teste A/B**
 - **Entregável:** desenho do experimento com hipótese nula, métricas primárias/secundárias, tamanho de amostra e duração estimada.
 - **Onde:**
-  - `deliverables/proposta_teste_ab/proposta_teste_ab.pdf` — documento final da proposta.
-  - `deliverables/proposta_teste_ab/latex/` — arquivos .tex usados no desenvolvimento do documento.
+  - `deliverables/proposta_teste_ab.pdf` — documento final da proposta.
   - `notebooks/07_proporcao_cpfs_taxas.ipynb` — estatísticas auxiliares para o cálculo de tamanho de amostra (insumo da proposta).
 
 
@@ -80,15 +89,15 @@ desafio-cientista-dados-pleno-campanhas/
 │   └── phone_scorer.md        # especificação detalhada do algoritmo
 ├── outputs/
 │   ├── processed/             # parquets intermediários gerados pelo 01
-│   └── decision_trees/        # árvores e regras geradas pelo 03
+│   ├── decision_trees/        # árvores e regras geradas pelo 03
+│   └── figs/                  # figuras geradas pelos notebooks (usadas no relatório consolidado)
 ├── mapping/
 │   └── mapping_sistemas.csv   # de-para id_sistema → sistema_nome
 ├── deliverables/
+│   ├── Relatorio_Completo_Desafio_Ciencia_de_Dados.pdf  # relatório consolidado (linguagem acessível)
+│   ├── proposta_teste_ab.pdf
 │   ├── ranking_confiabilidade.csv
-│   ├── ranking_operacional.csv
-│   └── proposta_teste_ab/
-│       ├── proposta_teste_ab.pdf
-│       └── latex/             # fontes LaTeX da proposta (main.tex + seções)
+│   └── ranking_operacional.csv
 ├── requirements.txt
 └── README.md
 ```
@@ -112,8 +121,9 @@ desafio-cientista-dados-pleno-campanhas/
 
 ## Reprodutibilidade
 
-### Pré-requisitos
+### Ambiente de desenvolvimento
 
+- **Sistema operacional:** Windows 11
 - **Python 3.14** (versão usada no desenvolvimento)
 - Acesso aos parquets brutos do bucket GCS:
   `https://console.cloud.google.com/storage/browser/case_vagas/whatsapp`

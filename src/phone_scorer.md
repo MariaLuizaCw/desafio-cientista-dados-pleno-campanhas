@@ -209,7 +209,6 @@ decompostos para auditoria.
 **Componentes normalizados (min-max por CPF):** `n_score_sistema`,
 `n_score_atualidade`, `n_score_read`.
 
-**Pesos efetivamente aplicados** (já renormalizados conforme
-`use_read`): `peso_sistema`, `peso_atualidade`, `peso_read`. Incluídos
+**Pesos efetivamente aplicados** (já renormalizados caso não haja histórico): `peso_sistema`, `peso_atualidade`, `peso_read`. Incluídos
 em cada linha para facilitar reproduzir o cálculo manualmente e
 auditar decisões.
