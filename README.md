@@ -75,7 +75,7 @@ Para o aprofundamento técnico completo (código, outputs intermediários, anál
 
 ```
 desafio-cientista-dados-pleno-campanhas/
-├── data/                      # dados brutos (NÃO versionado — ver "Dados")
+├── data/                      # dados brutos (NÃO versionado)
 ├── notebooks/                 # análises numeradas em ordem de execução
 │   ├── 01_preprocessing.ipynb
 │   ├── 02_qualidade_fontes.ipynb
